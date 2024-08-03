@@ -1,16 +1,19 @@
-// Automatically get the number of LEDs
-var pixelCount = 0; // This will be set by beforeRender using the in-built pixelCount
+var cycleDurations = [5000]; // Durations for each cycle in milliseconds
+var totalCycles = cycleDurations.length;
+var cycleIndex = 0;
+var cycleStartTime;
 
-var cycleDuration = 5000; // Duration for a full cycle in milliseconds (5 seconds)
-var boltMin, boltMax;
+var boltMin = floor(pixelCount / 15);
+var boltMax = ceil(pixelCount / 6);
 var fade = 15;
 
-var pixels;
-var x, timer;
+var pixels = array(pixelCount);
+var x = pixelCount - 1; // Start from the last pixel
+var timer = 0;
 
 function initializeCycle() {
-  timer = cycleDuration / pixelCount; // Set the timer based on the desired cycle duration
-  x = pixelCount - 1; // Start from the last pixel
+  cycleStartTime = time(.1); // Record the start time for the current cycle
+  timer = cycleDurations[cycleIndex] / pixelCount; // Set the timer based on the current cycle duration
 }
 
 function lerp(a, b, t) {
@@ -18,11 +21,21 @@ function lerp(a, b, t) {
 }
 
 export function beforeRender(delta) {
-  if (pixelCount === 0) {
-    pixelCount = pixelCount(); // Get the pixel count dynamically
-    pixels = array(pixelCount);
-    boltMin = floor(pixelCount / 15);
-    boltMax = ceil(pixelCount / 6);
+  if (!cycleStartTime) {
+    cycleStartTime = time(.1); // Record the start time for the sequence
+    initializeCycle();
+  }
+
+  // Calculate the elapsed time in milliseconds for the current cycle
+  var elapsedTime = (time(.1) - cycleStartTime) * 1000;
+
+  if (elapsedTime > cycleDurations[cycleIndex]) {
+    // Move to the next cycle
+    cycleIndex++;
+    if (cycleIndex >= totalCycles) {
+      // Reset to the first cycle if all cycles are completed
+      cycleIndex = 0;
+    }
     initializeCycle();
   }
 
@@ -39,11 +52,11 @@ export function beforeRender(delta) {
       pixels[x--] = 1;
     }
 
-    timer = cycleDuration / pixelCount; // Reset the timer for the next step
+    timer = cycleDurations[cycleIndex] / pixelCount; // Set the timer for the next step
 
     if (x < 0) {
       x = pixelCount - 1;
-      timer = cycleDuration / pixelCount; // Reset the timer for the new cycle
+      timer = cycleDurations[cycleIndex] / pixelCount; // Reset the timer for the new cycle
     }
   }
 }
