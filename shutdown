@@ -1,0 +1,58 @@
+// Automatically get the number of LEDs
+var pixelCount = 0; // This will be set by beforeRender using the in-built pixelCount
+
+var cycleDuration = 5000; // Duration for a full cycle in milliseconds (5 seconds)
+var boltMin, boltMax;
+var fade = 15;
+
+var pixels;
+var x, timer;
+
+function initializeCycle() {
+  timer = cycleDuration / pixelCount; // Set the timer based on the desired cycle duration
+  x = pixelCount - 1; // Start from the last pixel
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+export function beforeRender(delta) {
+  if (pixelCount === 0) {
+    pixelCount = pixelCount(); // Get the pixel count dynamically
+    pixels = array(pixelCount);
+    boltMin = floor(pixelCount / 15);
+    boltMax = ceil(pixelCount / 6);
+    initializeCycle();
+  }
+
+  // Fade effect
+  for (var i = 0; i < pixelCount; i++) {
+    pixels[i] -= (pixels[i] * fade * (delta / 1000)) + (1 >> 16);
+  }
+
+  timer -= delta;
+
+  if (timer <= 0) {
+    var boltSize = boltMin + random(boltMax - boltMin);
+    while (boltSize-- > 0 && x >= 0) {
+      pixels[x--] = 1;
+    }
+
+    timer = cycleDuration / pixelCount; // Reset the timer for the next step
+
+    if (x < 0) {
+      x = pixelCount - 1;
+      timer = cycleDuration / pixelCount; // Reset the timer for the new cycle
+    }
+  }
+}
+
+export function render(index) {
+  var v = pixels[index];
+
+  // Calculate the hue based on the index to create a rainbow effect
+  var hue = index / pixelCount;
+
+  hsv(hue, 1, v);
+}
