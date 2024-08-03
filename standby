@@ -1,20 +1,19 @@
-var cycleDuration = 5000; // Duration of one breathing cycle in milliseconds
+var cycleDuration = 5000;
 var accumMs = 0;
 var brightness = 0;
 
 export function beforeRender(delta) {
   accumMs += delta;
   
-  // Calculate the brightness value for breathing effect
   var t = (accumMs % cycleDuration) / cycleDuration;
-  brightness = 0.5 + 0.5 * sin(t * PI2); // Sine wave for smooth breathing
+  brightness = 0.5 + 0.5 * sin(t * PI2);
   
   // Apply gamma correction
   brightness = brightness * brightness;
 }
 
 export function render(index) {
-  var hue = 0.08; // Warm white color
-  var saturation = 0.3; // Reduced saturation for warm white
+  var hue = 0.08;
+  var saturation = 0.3;
   hsv(hue, saturation, brightness);
 }
