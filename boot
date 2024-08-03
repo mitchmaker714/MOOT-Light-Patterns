@@ -7,7 +7,7 @@ export function render(index) {
 
   v = pow(v, 5);
 
-  s = v < 0.9; // For the top 0.1 (10%) of brightness values, make it white
+  s = v < 0.9;
 
   hsv(0, s, v);
 }
