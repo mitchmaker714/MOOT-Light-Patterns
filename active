@@ -1,13 +1,23 @@
+export var speed = 1; // Initial speed value
+
+export function sliderSpeed(v) {
+  speed = v * 2 - 1;
+}
+
 export function beforeRender(delta) {
-  t1 = time(.1)
+  t1 = time(0.1 * speed);
 }
 
 export function render(index) {
-  v = wave(2 * (1 - t1) + index / pixelCount)
+  v = wave(2 * (1 - t1) + index / pixelCount);
   
-  v = pow(v, 5)
+  v = pow(v, 5);
   
-  s = v < .9
+  if (v > 0.85) {
+    s = 1 - (v - 0.85) * 7;
+  } else {
+    s = 1;
+  }
   
-  hsv(t1, s, v)
+  hsv(t1, s, v);
 }
