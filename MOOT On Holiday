@@ -1,0 +1,46 @@
+var twinkleSpeed = 350;
+var pixelStates = array(30);
+var targetStates = array(30);
+var pixelColors = array(30);
+var frameCounter = 0;
+
+var colors = [
+  [1, 1, 1],
+  [100 / 255, 255 / 255, 255 / 255],
+  [95 / 255, 242 / 255, 242 / 255],
+  [89 / 255, 228 / 255, 228 / 255]
+];
+
+export function sliderSpeed(value) {
+  twinkleSpeed = 100 + value * 1000;
+}
+
+function updatePixels() {
+  for (var i = 0; i < pixelStates.length; i++) {
+    if (random(1) < 0.175) {
+      targetStates[i] = random(1) < 0.35 ? random(1) * 0.6 + 0.4 : 0;
+      pixelColors[i] = colors[floor(random(colors.length))];
+    }
+  }
+}
+
+export function beforeRender(delta) {
+  frameCounter += delta;
+  if (frameCounter > 100) {
+    updatePixels();
+    frameCounter = 0;
+  }
+  for (var i = 0; i < pixelStates.length; i++) {
+    pixelStates[i] += (targetStates[i] - pixelStates[i]) * (delta / twinkleSpeed);
+  }
+}
+
+export function render(index) {
+  var brightness = pixelStates[index];
+  var color = pixelColors[index];
+  if (brightness > 0) {
+    rgb(color[0] * brightness, color[1] * brightness, color[2] * brightness);
+  } else {
+    rgb(0, 0, 0);
+  }
+}
