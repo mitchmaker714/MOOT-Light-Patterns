@@ -1,0 +1,109 @@
+// Define the LED coordinate map for the great stellated icosahedron
+var map = [
+  [ 3.09016994e-01,  9.51056516e-01,  0.00000000e+00],
+  [ 5.87785252e-01,  8.09016994e-01,  0.00000000e+00],
+  [ 8.09016994e-01,  5.87785252e-01,  1.78571429e-01],
+  [ 9.51056516e-01,  3.09016994e-01,  1.78571429e-01],
+  [ 1.00000000e+00,  6.12323400e-17,  0.00000000e+00],
+  [ 9.51056516e-01, -3.09016994e-01,  0.00000000e+00],
+  [ 8.09016994e-01, -5.87785252e-01,  1.78571429e-01],
+  [ 5.87785252e-01, -8.09016994e-01,  1.78571429e-01],
+  [ 3.09016994e-01, -9.51056516e-01,  0.00000000e+00],
+  [ 1.22464680e-16, -1.00000000e+00,  0.00000000e+00],
+  [-3.09016994e-01, -9.51056516e-01,  1.78571429e-01],
+  [-5.87785252e-01, -8.09016994e-01,  1.78571429e-01],
+  [-8.09016994e-01, -5.87785252e-01,  0.00000000e+00],
+  [-9.51056516e-01, -3.09016994e-01,  0.00000000e+00],
+  [-1.00000000e+00, -1.83697020e-16,  1.78571429e-01],
+  [-9.51056516e-01,  3.09016994e-01,  1.78571429e-01],
+  [-8.09016994e-01,  5.87785252e-01,  0.00000000e+00],
+  [-5.87785252e-01,  8.09016994e-01,  0.00000000e+00],
+  [-3.09016994e-01,  9.51056516e-01,  1.78571429e-01],
+  [-2.44929360e-16,  1.00000000e+00,  1.78571429e-01],
+  [ 2.30915635e-01,  3.17828105e-01,  8.21428571e-01],
+  [ 3.73629346e-01,  1.21399534e-01,  8.21428571e-01],
+  [ 3.73629346e-01, -1.21399534e-01,  8.21428571e-01],
+  [ 2.30915635e-01, -3.17828105e-01,  8.21428571e-01],
+  [ 4.81111243e-17, -3.92857143e-01,  8.21428571e-01],
+  [-2.30915635e-01, -3.17828105e-01,  8.21428571e-01],
+  [-3.73629346e-01, -1.21399534e-01,  8.21428571e-01],
+  [-3.73629346e-01,  1.21399534e-01,  8.21428571e-01],
+  [-2.30915635e-01,  3.17828105e-01,  8.21428571e-01],
+  [-9.62222485e-17,  3.92857143e-01,  8.21428571e-01]
+];
+
+// --- Configuration variables ---
+export var waveSpeed = 0.001;      // How fast the pulse expands outward
+export var pulseWidth = 0.5;     // Thickness of the pulse ring
+// The idle duration will be randomized between minIdle and maxIdle seconds.
+export var minIdle = 3.0;  
+export var maxIdle = 6.0;
+
+// --- State variables ---
+var burstActive = false;
+var idleTimer = 0;
+var idleDuration = minIdle + random(maxIdle - minIdle); // Random idle duration between bursts
+var waveRadius = 0;
+var burstOriginIndex = 0;
+var burstOriginCoord = [0, 0, 0];
+var burstHue = 0;
+var maxBurstDistance = 0;
+
+export function beforeRender(delta) {
+  if (burstActive) {
+    // Gradually expand the pulse
+    waveRadius += waveSpeed * delta;
+    if (waveRadius > maxBurstDistance + pulseWidth) {
+      // End the burst once the pulse has covered all LEDs
+      burstActive = false;
+      idleTimer = 0;
+      // Set a new random idle duration for the next burst
+      idleDuration = minIdle + random(maxIdle - minIdle);
+    }
+  } else {
+    idleTimer += delta;
+    if (idleTimer > idleDuration) {
+      // Start a new burst
+      burstActive = true;
+      burstOriginIndex = floor(random(map.length));
+      burstOriginCoord = map[burstOriginIndex];
+      burstHue = random(1);
+      waveRadius = 0;
+      maxBurstDistance = 0;
+      // Compute the maximum distance from the burst origin to any LED
+      for (var i = 0; i < map.length; i++) {
+        var dx = map[i][0] - burstOriginCoord[0];
+        var dy = map[i][1] - burstOriginCoord[1];
+        var dz = map[i][2] - burstOriginCoord[2];
+        var d = sqrt(dx * dx + dy * dy + dz * dz);
+        if (d > maxBurstDistance) {
+          maxBurstDistance = d;
+        }
+      }
+    }
+  }
+}
+
+export function render(index) {
+  if (!burstActive) {
+    // Turn off LEDs when no burst is active
+    hsv(0, 0, 0);
+    return;
+  }
+
+  // Compute each LED's distance from the burst origin
+  var coord = map[index];
+  var dx = coord[0] - burstOriginCoord[0];
+  var dy = coord[1] - burstOriginCoord[1];
+  var dz = coord[2] - burstOriginCoord[2];
+  var d = sqrt(dx * dx + dy * dy + dz * dz);
+
+  // Create the pulse effect: LEDs near the waveRadius light up
+  var pulse = 1 - abs(d - waveRadius) / pulseWidth;
+  if (pulse < 0) {
+    pulse = 0;
+  }
+  
+  // Set the LED color to the burst hue with full saturation and brightness modulated by the pulse
+  hsv(burstHue, 1, pulse);
+}
